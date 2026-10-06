@@ -324,7 +324,54 @@ Tell me about your car or describe a problem you're having, and I'll try to help
       document.getElementById("userInput").value = text;
       document.getElementById("userInput").focus();
     }
+async function sendMessage() {
+  const input = document.getElementById("userInput");
+  const question = input.value.trim();
 
+  if (!question) {
+    return;
+  }
+
+  addMessage(question, "user");
+  input.value = "";
+
+  addMessage("🤖 Thinking...", "assistant");
+
+  try {
+    const response = await fetch(
+      "https://autoal-assistant.y4tdf6hm6f.workers.dev",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          message: question
+        })
+      }
+    );
+
+    const data = await response.json();
+
+    const chat = document.getElementById("chat");
+    chat.removeChild(chat.lastElementChild);
+
+    if (data.answer) {
+      addMessage(data.answer, "assistant");
+    } else {
+      addMessage("❌ Something went wrong. Please try again.", "assistant");
+    }
+
+  } catch (error) {
+    const chat = document.getElementById("chat");
+    chat.removeChild(chat.lastElementChild);
+
+    addMessage(
+      "❌ I couldn't connect to AutoAI. Please try again.",
+      "assistant"
+    );
+  }
+}
     function addMessage(text, type) {
       const chat = document.getElementById("chat");
 
@@ -336,46 +383,7 @@ Tell me about your car or describe a problem you're having, and I'll try to help
       chat.scrollTop = chat.scrollHeight;
     }
 
-    function generateLocalAnswer(question) {
-      const q = question.toLowerCase();
-
-      if (q.includes("oil") || q.includes("масло")) {
-        return "🛢️ Oil service depends on the exact engine and manufacturer service schedule. Tell me your car model, engine, year and mileage and I can help you determine what should be checked.";
-      }
-
-      if (q.includes("epc")) {
-        return "⚠️ An EPC warning can be related to the engine or electronic throttle/control system. If the warning appears together with loss of power, unusual noises or flashing warning lights, have the car diagnosed as soon as possible.";
-      }
-
-      if (q.includes("noise") || q.includes("sound") || q.includes("шум")) {
-        return "🔧 A strange noise can have many causes. Tell me when you hear it — cold start, idle, acceleration, braking or turning — and describe whether it sounds like a whistle, knocking, grinding or rattling.";
-      }
-
-      if (q.includes("fuel") || q.includes("consumption") || q.includes("разход")) {
-        return "⛽ Fuel consumption depends on engine, driving style, traffic, tire pressure and many other factors. Tell me your car, engine and average consumption and we can look at it together.";
-      }
-
-      return "🚗 Thanks! I can help you investigate the problem. Please tell me your car's make, model, year, engine, mileage and exactly what is happening. The more details you provide, the more useful the answer can be.";
-    }
-
-    function sendMessage() {
-      const input = document.getElementById("userInput");
-      const question = input.value.trim();
-
-      if (!question) {
-        return;
-      }
-
-      addMessage(question, "user");
-
-      input.value = "";
-
-      setTimeout(function() {
-        const answer = generateLocalAnswer(question);
-        addMessage(answer, "assistant");
-      }, 500);
-    }
-
+    
     document.getElementById("userInput").addEventListener("keydown", function(event) {
       if (event.key === "Enter" && !event.shiftKey) {
         event.preventDefault();
